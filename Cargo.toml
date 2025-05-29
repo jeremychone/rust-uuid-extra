@@ -3,6 +3,9 @@ name        = "uuid-extra"
 version     = "0.0.1"
 description = "Minimalist UUID extra utilities for base encoding UUIDs (base64 and base58)"
 edition     = "2024"
+license     = "MIT OR Apache-2.0"
+homepage    = "https://github.com/jeremychone/rust-uuid-extra"
+repository  = "https://github.com/jeremychone/rust-uuid-extra"
 
 [lints.rust]
 unsafe_code = "forbid"
