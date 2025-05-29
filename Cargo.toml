@@ -7,6 +7,9 @@ edition = "2024"
 unsafe_code = "forbid"
 unused = { level = "allow", priority = -1 } # For exploratory dev.
 
+[lib]
+doctest = false
+
 [dependencies]
 # -- UUID
 uuid = { version = "1", features = ["v4", "v7"] }
