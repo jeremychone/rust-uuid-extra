@@ -1,11 +1,12 @@
 [package]
-name = "uuid-extra"
-version = "0.0.1"
-edition = "2024"
+name        = "uuid-extra"
+version     = "0.0.1"
+description = "Minimalist UUID extra utilities for base encoding UUIDs (base64 and base58)"
+edition     = "2024"
 
 [lints.rust]
 unsafe_code = "forbid"
-unused = { level = "allow", priority = -1 } # For exploratory dev.
+unused      = { level = "allow", priority = -1 } # For exploratory dev.
 
 [lib]
 doctest = false
