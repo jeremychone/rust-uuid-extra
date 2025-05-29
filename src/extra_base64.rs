@@ -1,5 +1,5 @@
 use crate::extra_uuid::{new_v4, new_v7};
-use crate::{Error, Result};
+use crate::{Error, Result, support};
 use base64::{Engine as _, engine::general_purpose};
 use uuid::Uuid;
 
@@ -52,28 +52,19 @@ pub fn new_v7_b64url_nopad() -> String {
 /// Decodes a standard Base64 encoded string into a UUID.
 pub fn from_b64(s: &str) -> Result<Uuid> {
 	let decoded_bytes = general_purpose::STANDARD.decode(s).map_err(Error::custom_from_err)?;
-	let bytes_array: [u8; 16] = decoded_bytes
-		.try_into()
-		.map_err(|_| Error::custom("Decoded Base64 string is not 16 bytes long, required for UUID"))?;
-	Ok(Uuid::from_bytes(bytes_array))
+	support::from_vec_u8(decoded_bytes, "base64")
 }
 
 /// Decodes a URL-safe Base64 encoded string (with padding) into a UUID.
 pub fn from_b64url(s: &str) -> Result<Uuid> {
 	let decoded_bytes = general_purpose::URL_SAFE.decode(s).map_err(Error::custom_from_err)?;
-	let bytes_array: [u8; 16] = decoded_bytes
-		.try_into()
-		.map_err(|_| Error::custom("Decoded URL-safe Base64 string is not 16 bytes long, required for UUID"))?;
-	Ok(Uuid::from_bytes(bytes_array))
+	support::from_vec_u8(decoded_bytes, "base64url")
 }
 
 /// Decodes a URL-safe Base64 encoded string (without padding) into a UUID.
 pub fn from_b64url_nopad(s: &str) -> Result<Uuid> {
 	let decoded_bytes = general_purpose::URL_SAFE_NO_PAD.decode(s).map_err(Error::custom_from_err)?;
-	let bytes_array: [u8; 16] = decoded_bytes.try_into().map_err(|_| {
-		Error::custom("Decoded URL-safe (no pad) Base64 string is not 16 bytes long, required for UUID")
-	})?;
-	Ok(Uuid::from_bytes(bytes_array))
+	support::from_vec_u8(decoded_bytes, "base64url-nopad")
 }
 
 // endregion: --- From String
@@ -318,8 +309,9 @@ mod tests {
 		// -- Check
 		assert!(decoded_uuid_res.is_err(), "Decoding should fail for wrong length");
 		let err_msg = decoded_uuid_res.err().unwrap().to_string();
+		println!("->> {err_msg}");
 		assert!(
-			err_msg.contains("Decoded Base64 string is not 16 bytes long"),
+			err_msg.contains("FailToDecode16U8"),
 			"Error message should indicate wrong length"
 		);
 		Ok(())
@@ -369,8 +361,8 @@ mod tests {
 		assert!(decoded_uuid_res.is_err(), "Decoding should fail for wrong length");
 		let err_msg = decoded_uuid_res.err().unwrap().to_string();
 		assert!(
-			err_msg.contains("Decoded URL-safe Base64 string is not 16 bytes long"),
-			"Error message should indicate wrong length"
+			err_msg.contains("FailToDecode16U8 { context: \"base64url\""),
+			"Error message should indicate FailToDecode16U8 for base64url"
 		);
 		Ok(())
 	}
@@ -419,8 +411,8 @@ mod tests {
 		assert!(decoded_uuid_res.is_err(), "Decoding should fail for wrong length");
 		let err_msg = decoded_uuid_res.err().unwrap().to_string();
 		assert!(
-			err_msg.contains("Decoded URL-safe (no pad) Base64 string is not 16 bytes long"),
-			"Error message should indicate wrong length"
+			err_msg.contains("FailToDecode16U8 { context: \"base64url-nopad\""),
+			"Error message should indicate FailToDecode16U8 for base64url-nopad"
 		);
 		Ok(())
 	}

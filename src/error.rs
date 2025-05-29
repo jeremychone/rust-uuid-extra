@@ -8,6 +8,11 @@ pub enum Error {
 	#[from(String, &String, &str)]
 	Custom(String),
 
+	FailToDecode16U8 {
+		context: &'static str,
+		actual_length: usize,
+	},
+
 	// -- Externals
 	#[from]
 	Io(std::io::Error), // as example
