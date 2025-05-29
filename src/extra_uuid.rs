@@ -1,5 +1,4 @@
 use crate::{Error, Result};
-use std::time::SystemTime;
 use uuid::Uuid;
 
 // region:    --- Raw Uuid
@@ -173,4 +172,3 @@ mod tests {
 }
 
 // endregion: --- Tests
-

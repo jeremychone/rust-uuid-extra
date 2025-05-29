@@ -76,7 +76,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use base64::{Engine as _, engine::general_purpose as b64_gp};
+	use base64::engine::general_purpose as b64_gp;
 	use uuid::{Uuid, Version};
 
 	#[test]
