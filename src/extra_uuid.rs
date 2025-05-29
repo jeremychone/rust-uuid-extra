@@ -1,3 +1,5 @@
+use crate::{Error, Result};
+use std::time::SystemTime;
 use uuid::Uuid;
 
 // region:    --- Raw Uuid
@@ -12,6 +14,22 @@ pub fn new_v4() -> Uuid {
 /// Alias to `now_v7`
 pub fn new_v7() -> Uuid {
 	Uuid::now_v7()
+}
+
+/// If `uuid` is a version-7 UUID, return the embedded timestamp as a `SystemTime`,
+/// otherwise return `None`.
+pub fn to_time_epoch_ms(uuid: &Uuid) -> Result<i64> {
+	// make sure this really is a v7 UUID
+	if uuid.get_version_num() != 7 {
+		return Err(Error::FailExtractTimeNoUuidV7(*uuid));
+	}
+
+	// as_u128() lays out the bytes big-endian, so the top 48 bits are our ms timestamp
+	let as_int = uuid.as_u128();
+	let ts_ms = (as_int >> 80) as i64; // drop the low 80 bits, leaving top 48
+
+	// convert ms-since-epoch
+	Ok(ts_ms)
 }
 
 /// Generates a new UUID version 7 with the now time.
@@ -30,6 +48,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
+	use std::time::SystemTime;
 	use uuid::Version;
 
 	#[test]
@@ -65,10 +84,92 @@ mod tests {
 		// Note: Uuid::now_v7() guarantees monotonicity for calls within the same millisecond
 		// by incrementing a sequence counter. If calls are in different milliseconds,
 		// the time component will ensure ordering.
-		assert!(uuid_v7_1 < uuid_v7_2, "UUID {} should be less than UUID {}", uuid_v7_1, uuid_v7_2);
+		assert!(
+			uuid_v7_1 < uuid_v7_2,
+			"UUID {} should be less than UUID {}",
+			uuid_v7_1,
+			uuid_v7_2
+		);
 
 		Ok(())
 	}
+
+	#[test]
+	fn test_extra_uuid_to_time_epoch_ms_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let t0_ms = system_time_to_ms(SystemTime::now())?;
+		// Small delay to ensure time progresses if system clock resolution is low
+		// relative to execution speed, and that new_v7() has a distinct timestamp.
+		std::thread::sleep(std::time::Duration::from_millis(1));
+
+		let uuid_v7 = new_v7(); // Uuid::now_v7() is used here
+
+		std::thread::sleep(std::time::Duration::from_millis(1));
+		let t1_ms = system_time_to_ms(SystemTime::now())?;
+
+		// -- Exec
+		let extracted_ts_ms = to_time_epoch_ms(&uuid_v7)?;
+
+		// -- Check
+		// The extracted timestamp should be between t0_ms and t1_ms (inclusive).
+		assert!(
+			extracted_ts_ms >= t0_ms,
+			"Extracted timestamp {}ms should be greater than or equal to t0_ms {}ms. UUID: {}",
+			extracted_ts_ms,
+			t0_ms,
+			uuid_v7
+		);
+		assert!(
+			extracted_ts_ms <= t1_ms,
+			"Extracted timestamp {}ms should be less than or equal to t1_ms {}ms. UUID: {}",
+			extracted_ts_ms,
+			t1_ms,
+			uuid_v7
+		);
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_extra_uuid_to_time_epoch_ms_err_not_v7() -> Result<()> {
+		// -- Setup & Fixtures
+		let uuid_v4 = new_v4();
+
+		// -- Exec
+		let result = to_time_epoch_ms(&uuid_v4);
+
+		// -- Check
+		match result {
+			Err(Error::FailExtractTimeNoUuidV7(id)) => {
+				assert_eq!(id, uuid_v4, "The UUID in the error should match the input UUID.");
+			}
+			Ok(ts) => {
+				return Err(format!(
+					"Expected FailExtractTimeNoUuidV7 error for non-v7 UUID, but got Ok({}). UUID was: {}",
+					ts, uuid_v4
+				)
+				.into());
+			}
+			Err(other_error) => {
+				return Err(format!(
+					"Expected FailExtractTimeNoUuidV7 error, but got a different error: {:?}. UUID was: {}",
+					other_error, uuid_v4
+				)
+				.into());
+			}
+		}
+
+		Ok(())
+	}
+
+	// region:    --- Support
+	fn system_time_to_ms(st: SystemTime) -> Result<i64> {
+		Ok(st
+			.duration_since(SystemTime::UNIX_EPOCH)
+			.map_err(|e| format!("Failed to get duration since UNIX_EPOCH: {}", e))?
+			.as_millis() as i64)
+	}
+	// endregion: --- Support
 }
 
 // endregion: --- Tests

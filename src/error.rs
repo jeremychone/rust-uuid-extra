@@ -1,4 +1,5 @@
 use derive_more::{Display, From};
+use uuid::Uuid;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -12,6 +13,8 @@ pub enum Error {
 		context: &'static str,
 		actual_length: usize,
 	},
+
+	FailExtractTimeNoUuidV7(Uuid),
 
 	// -- Externals
 	#[from]
