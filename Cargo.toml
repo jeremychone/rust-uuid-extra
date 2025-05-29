@@ -8,8 +8,11 @@ unsafe_code = "forbid"
 unused = { level = "allow", priority = -1 } # For exploratory dev.
 
 [dependencies]
-# -- Id
+# -- UUID
 uuid = { version = "1", features = ["v4", "v7"] }
+# -- BaseX
+base64 = "0.22.1"
+bs58 = "0.5.1"
 # -- Others
 derive_more = {version = "2", features = ["from", "display"] }
 

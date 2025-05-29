@@ -55,6 +55,7 @@ mod tests {
 		// Ensure a slight delay for time-based ordering if testing monotonicity strictly,
 		// but for basic version check, it's not critical.
 		// For now, we just check the version.
+		std::thread::sleep(std::time::Duration::from_micros(100)); // Ensure time moves for next v7
 		let uuid_v7_2 = new_v7();
 
 		// -- Check
@@ -64,10 +65,11 @@ mod tests {
 		// Note: Uuid::now_v7() guarantees monotonicity for calls within the same millisecond
 		// by incrementing a sequence counter. If calls are in different milliseconds,
 		// the time component will ensure ordering.
-		assert!(uuid_v7_1 < uuid_v7_2 || uuid_v7_1.to_string() != uuid_v7_2.to_string());
+		assert!(uuid_v7_1 < uuid_v7_2, "UUID {} should be less than UUID {}", uuid_v7_1, uuid_v7_2);
 
 		Ok(())
 	}
 }
 
 // endregion: --- Tests
+
