@@ -15,8 +15,7 @@ pub fn new_v7() -> Uuid {
 	Uuid::now_v7()
 }
 
-/// If `uuid` is a version-7 UUID, return the embedded timestamp as a `SystemTime`,
-/// otherwise return `None`.
+/// If `uuid` is a version-7 UUID, return the epoch time millisecond precision.
 pub fn to_time_epoch_ms(uuid: &Uuid) -> Result<i64> {
 	// make sure this really is a v7 UUID
 	if uuid.get_version_num() != 7 {
