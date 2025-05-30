@@ -1,6 +1,6 @@
 [package]
 name        = "uuid-extra"
-version     = "0.0.1"
+version     = "0.0.2-WIP"
 description = "Minimalist UUID extra utilities for base encoding UUIDs (base64 and base58)"
 edition     = "2024"
 license     = "MIT OR Apache-2.0"
