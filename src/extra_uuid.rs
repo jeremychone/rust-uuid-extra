@@ -84,9 +84,7 @@ mod tests {
 		// the time component will ensure ordering.
 		assert!(
 			uuid_v7_1 < uuid_v7_2,
-			"UUID {} should be less than UUID {}",
-			uuid_v7_1,
-			uuid_v7_2
+			"UUID {uuid_v7_1} should be less than UUID {uuid_v7_2}"
 		);
 
 		Ok(())
@@ -112,17 +110,11 @@ mod tests {
 		// The extracted timestamp should be between t0_ms and t1_ms (inclusive).
 		assert!(
 			extracted_ts_ms >= t0_ms,
-			"Extracted timestamp {}ms should be greater than or equal to t0_ms {}ms. UUID: {}",
-			extracted_ts_ms,
-			t0_ms,
-			uuid_v7
+			"Extracted timestamp {extracted_ts_ms}ms should be greater than or equal to t0_ms {t0_ms}ms. UUID: {uuid_v7}"
 		);
 		assert!(
 			extracted_ts_ms <= t1_ms,
-			"Extracted timestamp {}ms should be less than or equal to t1_ms {}ms. UUID: {}",
-			extracted_ts_ms,
-			t1_ms,
-			uuid_v7
+			"Extracted timestamp {extracted_ts_ms}ms should be less than or equal to t1_ms {t1_ms}ms. UUID: {uuid_v7}"
 		);
 
 		Ok(())
@@ -143,15 +135,13 @@ mod tests {
 			}
 			Ok(ts) => {
 				return Err(format!(
-					"Expected FailExtractTimeNoUuidV7 error for non-v7 UUID, but got Ok({}). UUID was: {}",
-					ts, uuid_v4
+					"Expected FailExtractTimeNoUuidV7 error for non-v7 UUID, but got Ok({ts}). UUID was: {uuid_v4}"
 				)
 				.into());
 			}
 			Err(other_error) => {
 				return Err(format!(
-					"Expected FailExtractTimeNoUuidV7 error, but got a different error: {:?}. UUID was: {}",
-					other_error, uuid_v4
+					"Expected FailExtractTimeNoUuidV7 error, but got a different error: {other_error:?}. UUID was: {uuid_v4}"
 				)
 				.into());
 			}
@@ -164,7 +154,7 @@ mod tests {
 	fn system_time_to_ms(st: SystemTime) -> Result<i64> {
 		Ok(st
 			.duration_since(SystemTime::UNIX_EPOCH)
-			.map_err(|e| format!("Failed to get duration since UNIX_EPOCH: {}", e))?
+			.map_err(|e| format!("Failed to get duration since UNIX_EPOCH: {e}"))?
 			.as_millis() as i64)
 	}
 	// endregion: --- Support

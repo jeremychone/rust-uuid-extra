@@ -139,8 +139,7 @@ mod tests {
 		// This gets wrapped in Error::Custom(String), so the string will be like Custom("...")
 		assert!(
 			err_msg.contains("provided string contained invalid character"),
-			"Error message should indicate invalid Base58 character. Got: {}",
-			err_msg
+			"Error message should indicate invalid Base58 character. Got: {err_msg}",
 		);
 		Ok(())
 	}
@@ -162,7 +161,7 @@ mod tests {
 				assert_eq!(context, "base58", "Error context should be 'base58'");
 				assert_eq!(actual_length, 5, "Actual length should be 5 for 'short'");
 			}
-			_ => panic!("Expected FailToDecode16U8, got {:?}", err),
+			_ => panic!("Expected FailToDecode16U8, got {err:?}"),
 		}
 		Ok(())
 	}
