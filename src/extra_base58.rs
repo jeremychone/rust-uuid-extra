@@ -1,4 +1,4 @@
-use crate::extra_uuid::{new_v4, new_v7};
+use crate::extra_uuid::{new_v4, new_v7, to_time_epoch_ms};
 use crate::{Error, Result, support};
 use uuid::Uuid;
 
@@ -28,6 +28,13 @@ pub fn new_v7_b58() -> String {
 pub fn from_b58(s: &str) -> Result<Uuid> {
 	let decoded_bytes = bs58::decode(s).into_vec().map_err(Error::custom_from_err)?;
 	support::from_vec_u8(decoded_bytes, "base58")
+}
+
+/// Decodes a Base58 encoded string into an epoch millisecond timestamp.
+/// This function is valid only for UUID v7.
+pub fn b58_to_epoch_ms(s: &str) -> Result<i64> {
+	let uuid = from_b58(s)?;
+	to_time_epoch_ms(&uuid)
 }
 
 // endregion: --- From String
@@ -167,6 +174,41 @@ mod tests {
 	}
 
 	// endregion: --- Tests for from_... functions
+
+	#[test]
+	fn test_extra_base58_b58_to_epoch_ms_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let original_uuid = new_v7();
+		let b58_string = bs58::encode(original_uuid.as_bytes()).into_string();
+		let original_ts = to_time_epoch_ms(&original_uuid)?;
+
+		// -- Exec
+		let extracted_ts = b58_to_epoch_ms(&b58_string)?;
+
+		// -- Check
+		assert_eq!(extracted_ts, original_ts);
+		Ok(())
+	}
+
+	#[test]
+	fn test_extra_base58_b58_to_epoch_ms_err_not_v7() -> Result<()> {
+		// -- Setup & Fixtures
+		let uuid_v4 = new_v4();
+		let b58_string = bs58::encode(uuid_v4.as_bytes()).into_string();
+
+		// -- Exec
+		let result = b58_to_epoch_ms(&b58_string);
+
+		// -- Check
+		assert!(result.is_err());
+		match result {
+			Err(Error::FailExtractTimeNoUuidV7(id)) => {
+				assert_eq!(id, uuid_v4);
+			}
+			_ => panic!("Expected FailExtractTimeNoUuidV7 error"),
+		}
+		Ok(())
+	}
 }
 
 // endregion: --- Tests

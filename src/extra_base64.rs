@@ -1,6 +1,6 @@
-use crate::extra_uuid::{new_v4, new_v7};
+use crate::extra_uuid::{new_v4, new_v7, to_time_epoch_ms};
 use crate::{Error, Result, support};
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use uuid::Uuid;
 
 // region:    --- v4
@@ -55,16 +55,37 @@ pub fn from_b64(s: &str) -> Result<Uuid> {
 	support::from_vec_u8(decoded_bytes, "base64")
 }
 
+/// Decodes a standard Base64 encoded string into an epoch millisecond timestamp.
+/// This function is valid only for UUID v7.
+pub fn b64_to_epoch_ms(s: &str) -> Result<i64> {
+	let uuid = from_b64(s)?;
+	to_time_epoch_ms(&uuid)
+}
+
 /// Decodes a URL-safe Base64 encoded string (with padding) into a UUID.
 pub fn from_b64url(s: &str) -> Result<Uuid> {
 	let decoded_bytes = general_purpose::URL_SAFE.decode(s).map_err(Error::custom_from_err)?;
 	support::from_vec_u8(decoded_bytes, "base64url")
 }
 
+/// Decodes a URL-safe Base64 encoded string (with padding) into an epoch millisecond timestamp.
+/// This function is valid only for UUID v7.
+pub fn b64url_to_epoch_ms(s: &str) -> Result<i64> {
+	let uuid = from_b64url(s)?;
+	to_time_epoch_ms(&uuid)
+}
+
 /// Decodes a URL-safe Base64 encoded string (without padding) into a UUID.
 pub fn from_b64url_nopad(s: &str) -> Result<Uuid> {
 	let decoded_bytes = general_purpose::URL_SAFE_NO_PAD.decode(s).map_err(Error::custom_from_err)?;
 	support::from_vec_u8(decoded_bytes, "base64url-nopad")
+}
+
+/// Decodes a URL-safe Base64 encoded string (without padding) into an epoch millisecond timestamp.
+/// This function is valid only for UUID v7.
+pub fn b64url_nopad_to_epoch_ms(s: &str) -> Result<i64> {
+	let uuid = from_b64url_nopad(s)?;
+	to_time_epoch_ms(&uuid)
 }
 
 // endregion: --- From String
@@ -418,6 +439,111 @@ mod tests {
 	}
 
 	// endregion: --- Tests for from_... functions
+
+	#[test]
+	fn test_extra_base64_b64_to_epoch_ms_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let original_uuid = new_v7();
+		let b64_string = b64_gp::STANDARD.encode(original_uuid.as_bytes());
+		let original_ts = to_time_epoch_ms(&original_uuid)?;
+
+		// -- Exec
+		let extracted_ts = b64_to_epoch_ms(&b64_string)?;
+
+		// -- Check
+		assert_eq!(extracted_ts, original_ts);
+		Ok(())
+	}
+
+	#[test]
+	fn test_extra_base64_b64_to_epoch_ms_err_not_v7() -> Result<()> {
+		// -- Setup & Fixtures
+		let uuid_v4 = new_v4();
+		let b64_string = b64_gp::STANDARD.encode(uuid_v4.as_bytes());
+
+		// -- Exec
+		let result = b64_to_epoch_ms(&b64_string);
+
+		// -- Check
+		assert!(result.is_err());
+		match result {
+			Err(Error::FailExtractTimeNoUuidV7(id)) => {
+				assert_eq!(id, uuid_v4);
+			}
+			_ => panic!("Expected FailExtractTimeNoUuidV7 error"),
+		}
+		Ok(())
+	}
+
+	#[test]
+	fn test_extra_base64_b64url_to_epoch_ms_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let original_uuid = new_v7();
+		let b64url_string = b64_gp::URL_SAFE.encode(original_uuid.as_bytes());
+		let original_ts = to_time_epoch_ms(&original_uuid)?;
+
+		// -- Exec
+		let extracted_ts = b64url_to_epoch_ms(&b64url_string)?;
+
+		// -- Check
+		assert_eq!(extracted_ts, original_ts);
+		Ok(())
+	}
+
+	#[test]
+	fn test_extra_base64_b64url_to_epoch_ms_err_not_v7() -> Result<()> {
+		// -- Setup & Fixtures
+		let uuid_v4 = new_v4();
+		let b64url_string = b64_gp::URL_SAFE.encode(uuid_v4.as_bytes());
+
+		// -- Exec
+		let result = b64url_to_epoch_ms(&b64url_string);
+
+		// -- Check
+		assert!(result.is_err());
+		match result {
+			Err(Error::FailExtractTimeNoUuidV7(id)) => {
+				assert_eq!(id, uuid_v4);
+			}
+			_ => panic!("Expected FailExtractTimeNoUuidV7 error"),
+		}
+		Ok(())
+	}
+
+	#[test]
+	fn test_extra_base64_b64url_nopad_to_epoch_ms_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let original_uuid = new_v7();
+		let b64url_nopad_string = b64_gp::URL_SAFE_NO_PAD.encode(original_uuid.as_bytes());
+		let original_ts = to_time_epoch_ms(&original_uuid)?;
+
+		// -- Exec
+		let extracted_ts = b64url_nopad_to_epoch_ms(&b64url_nopad_string)?;
+
+		// -- Check
+		assert_eq!(extracted_ts, original_ts);
+		Ok(())
+	}
+
+	#[test]
+	fn test_extra_base64_b64url_nopad_to_epoch_ms_err_not_v7() -> Result<()> {
+		// -- Setup & Fixtures
+		let uuid_v4 = new_v4();
+		let b64url_nopad_string = b64_gp::URL_SAFE_NO_PAD.encode(uuid_v4.as_bytes());
+
+		// -- Exec
+		let result = b64url_nopad_to_epoch_ms(&b64url_nopad_string);
+
+		// -- Check
+		assert!(result.is_err());
+		match result {
+			Err(Error::FailExtractTimeNoUuidV7(id)) => {
+				assert_eq!(id, uuid_v4);
+			}
+			_ => panic!("Expected FailExtractTimeNoUuidV7 error"),
+		}
+		Ok(())
+	}
 }
 
 // endregion: --- Tests
